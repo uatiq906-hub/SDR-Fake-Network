@@ -412,10 +412,13 @@ above matter more than the software itself.
 
 ## Author
 
-**[Your Name]**
-_[Add: your program/field of study or role, and how this project relates to it —
-e.g. "built while exploring signal processing, applied ML, and RF systems
-ahead of applying to [program]."]_
+**Atiq Ur Rehman**
+Final-year Electrical Engineering student at NUST. My coursework and
+project work span machine learning, computer vision, telecommunications,
+embedded systems, and signal processing — including AI-based drone
+detection, an AI transcription system, software-defined radio, and
+FPGA-based edge video anomaly detection. This project combines several of
+those threads (LLM-driven generation, DSP, and SDR) into one system.
 
-- GitHub: [@your-username](https://github.com/your-username)
-- Email: your.email@example.com
+- GitHub: [@uatiq906-hub](https://github.com/uatiq906-hub)
+- Email: uatiq906@gmail.com
