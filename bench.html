@@ -1,0 +1,602 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pipeline Bench — Net Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;600;700&family=Public+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#E4E6E0;--sheet:#F2F3EF;--sheet2:#EAECE6;
+  --ink:#191E1C;--soft:#5A625D;--faint:#949B95;
+  --rule:#C6C9C1;--rule2:#D6D9D1;
+  --flash:#A32D26;--olive:#55634C;--steel:#46617C;--amber:#B5852A;
+  --fd:'Saira Condensed',sans-serif;--fb:'Public Sans',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fb);font-size:15px}
+
+.mast{border-bottom:2px solid var(--ink);padding:13px 22px;display:flex;
+  align-items:baseline;gap:16px;flex-wrap:wrap}
+.mast h1{font-family:var(--fd);font-size:24px;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;margin:0}
+.mast .sub{font-family:var(--fd);font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--soft)}
+.mast .sp{flex:1}
+.stamp{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--flash);border:1.5px solid var(--flash);
+  padding:3px 9px 2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:20px 22px 60px}
+h2{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--soft);margin:26px 0 10px;
+  padding-bottom:5px;border-bottom:1px solid var(--rule)}
+h2:first-child{margin-top:0}
+
+.btn{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:.11em;
+  text-transform:uppercase;padding:8px 16px;cursor:pointer;
+  border:1.5px solid var(--ink);background:none;color:var(--ink)}
+.btn:hover:not(:disabled){background:var(--ink);color:var(--sheet)}
+.btn.pri{background:var(--flash);border-color:var(--flash);color:#fff}
+.btn.pri:hover:not(:disabled){background:#8C231D}
+.btn.sm{padding:4px 11px;font-size:11.5px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.msg{font-size:12.5px;color:var(--soft)}
+label.f{display:block;font-family:var(--fd);font-size:11px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--soft);margin-bottom:5px}
+input[type=text],textarea,select{width:100%;padding:8px 10px;background:var(--sheet);
+  border:1px solid var(--rule);font-family:var(--fb);font-size:14px;color:var(--ink)}
+textarea{resize:vertical;min-height:64px}
+.mono{font-family:var(--fm);font-size:12.5px}
+.hint{font-size:12px;color:var(--faint);margin:5px 0 0}
+.bad{color:var(--flash)}
+.ok-t{color:var(--olive);font-weight:600}
+
+/* ---- readiness ---- */
+.ready{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.rd{border:1px solid var(--rule);border-left:3px solid var(--rule);
+  background:var(--sheet);padding:10px 13px}
+.rd.on{border-left-color:var(--olive)}
+.rd.off{border-left-color:var(--flash)}
+.rd-n{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;margin-bottom:3px}
+.rd-s{font-family:var(--fm);font-size:11px;color:var(--soft)}
+.rd.on .rd-s{color:var(--olive)}
+.rd.off .rd-s{color:var(--flash)}
+
+/* ---- two radios ---- */
+.radios{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.radios{grid-template-columns:1fr}}
+.radio{border:1px solid var(--rule);background:var(--sheet);padding:15px 17px}
+.radio.A{border-top:3px solid var(--olive)}
+.radio.B{border-top:3px solid var(--steel)}
+.radio-h{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:11px}
+.radio-n{font-family:var(--fd);font-size:19px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase}
+.radio-v{font-family:var(--fm);font-size:11px;color:var(--faint)}
+.radio-st{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);margin-top:9px;min-height:14px}
+.radio-st.tx{color:var(--olive)}
+.radio-st.rx{color:var(--steel)}
+
+/* ---- pipeline ---- */
+.pipe{border:1px solid var(--rule);background:var(--sheet)}
+.pstage{display:grid;grid-template-columns:26px 168px 1fr 96px;gap:12px;
+  align-items:center;padding:9px 14px;border-bottom:1px solid var(--rule2)}
+.pstage:last-child{border-bottom:0}
+.pstage.pass{background:#EEF2EA}
+.pstage.fail{background:#F7EBEA}
+.pstage.wait{opacity:.45}
+.pmark{font-family:var(--fm);font-size:15px;font-weight:700;text-align:center}
+.pstage.pass .pmark{color:var(--olive)}
+.pstage.fail .pmark{color:var(--flash)}
+.pstage.run .pmark{color:var(--amber)}
+.pname{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:.11em;
+  text-transform:uppercase}
+.pdetail{font-size:12.5px;color:var(--soft)}
+.pstage.fail .pdetail{color:var(--flash)}
+.pact{text-align:right}
+
+/* ---- comparison ---- */
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+.cq{border:1px solid var(--rule);background:var(--sheet);padding:12px 14px}
+.cq-v{font-family:var(--fd);font-size:24px;font-weight:700;line-height:1}
+.cq-k{font-family:var(--fd);font-size:10.5px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);margin-top:5px}
+.cq.good .cq-v{color:var(--olive)}
+.cq.warn .cq-v{color:var(--flash)}
+
+/* ---- verdict ---- */
+.verdict{border:1px solid var(--rule);border-left:3px solid var(--rule);
+  background:var(--sheet);padding:14px 17px;margin-top:14px}
+.verdict.pass{border-left-color:var(--olive)}
+.verdict.fail{border-left-color:var(--flash)}
+.v-t{font-family:var(--fd);font-size:17px;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;margin-bottom:5px}
+.verdict.pass .v-t{color:var(--olive)}
+.verdict.fail .v-t{color:var(--flash)}
+.v-d{font-size:13px;color:var(--soft)}
+
+/* ---- log ---- */
+.log{border:1px solid var(--rule);background:var(--sheet);max-height:320px;
+  overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{position:sticky;top:0;background:var(--sheet2);font-family:var(--fd);font-size:10px;
+  font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--soft);
+  text-align:left;padding:6px 10px;border-bottom:1.5px solid var(--ink);z-index:2}
+td{padding:6px 10px;border-bottom:1px solid var(--rule2);vertical-align:top}
+tr:nth-child(even) td{background:var(--sheet2)}
+tr.fail td{background:#F7EBEA}
+.tag{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.08em;
+  padding:1px 5px;border:1px solid;white-space:nowrap}
+.tag.A{color:var(--olive);border-color:var(--olive)}
+.tag.B{color:var(--steel);border-color:var(--steel)}
+.tag.SIM{color:var(--amber);border-color:var(--amber)}
+.empty{color:var(--faint);font-style:italic;padding:20px 14px;margin:0;font-size:13.5px}
+.note{border-left:2px solid var(--olive);padding:4px 0 4px 11px;margin:13px 0;
+  font-size:12.5px;color:var(--soft);line-height:1.6}
+.note.warn{border-left-color:var(--amber)}
+.note.bad{border-left-color:var(--flash)}
+audio{width:100%;height:32px;margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+</style>
+
+<header class="mast">
+  <h1>Pipeline Bench</h1>
+  <span class="sub">text &rarr; chatterbox &rarr; dsp &rarr; radio &rarr; playback</span>
+  <span class="sp"></span>
+  <span class="stamp">Exercise &mdash; simulation only</span>
+</header>
+
+<div class="wrap">
+
+  <h2>Ready?</h2>
+  <div class="ready" id="ready"></div>
+  <p class="note" id="ready-note"></p>
+
+  <h2>Send a message</h2>
+
+  <div class="bar">
+    <div style="flex:1;min-width:200px">
+      <label class="f" for="mode">Radio hop</label>
+      <select id="mode">
+        <option value="loopback" selected>Loopback &mdash; no hardware, simulated</option>
+        <option value="radio">Through the radios &mdash; real transmission</option>
+      </select>
+    </div>
+    <div style="width:150px">
+      <label class="f" for="carrier">Carrier (MHz)</label>
+      <input type="text" id="carrier" class="mono" value="2400">
+    </div>
+  </div>
+
+  <div class="radios">
+    <div class="radio A">
+      <div class="radio-h">
+        <span class="radio-n">Radio A</span>
+        <span class="radio-v">Voice A &middot; voice_a.wav</span>
+      </div>
+      <label class="f" for="text-a">Message</label>
+      <textarea id="text-a">Radio Bravo, this is Radio Alpha. Radio check. Do you read me?</textarea>
+      <div class="bar" style="margin:10px 0 0">
+        <button class="btn pri sm" id="send-a">Generate &amp; transmit</button>
+        <span class="msg" id="msg-a"></span>
+      </div>
+      <div class="radio-st" id="st-a"></div>
+    </div>
+
+    <div class="radio B">
+      <div class="radio-h">
+        <span class="radio-n">Radio B</span>
+        <span class="radio-v">Voice B &middot; voice_b.wav</span>
+      </div>
+      <label class="f" for="text-b">Message</label>
+      <textarea id="text-b">Radio Alpha, this is Radio Bravo. I read you loud and clear.</textarea>
+      <div class="bar" style="margin:10px 0 0">
+        <button class="btn pri sm" id="send-b">Generate &amp; transmit</button>
+        <span class="msg" id="msg-b"></span>
+      </div>
+      <div class="radio-st" id="st-b"></div>
+    </div>
+  </div>
+
+  <h2>The pipeline</h2>
+  <div class="pipe" id="pipe"></div>
+
+  <div id="result" style="display:none">
+    <h2>Did the audio survive?</h2>
+    <div class="cmp" id="cmp"></div>
+
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label class="f">1. Straight from Chatterbox, untouched</label>
+        <audio controls id="au-raw"></audio>
+      </div>
+      <div>
+        <label class="f">2. After the radio processing &mdash; what is transmitted</label>
+        <audio controls id="au-tx"></audio>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label class="f">3. Off the receiver &mdash; should match 2, not 1</label>
+      <audio controls id="au-rx"></audio>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>Test sequence</h2>
+  <div class="bar">
+    <button class="btn" id="t1">Test 1 &mdash; A to B</button>
+    <button class="btn" id="t2">Test 2 &mdash; B to A</button>
+    <button class="btn" id="t3">Test 3 &mdash; four in turn</button>
+    <span class="msg" id="seq-msg"></span>
+  </div>
+
+  <h2>Messages</h2>
+  <div class="log">
+    <table>
+      <thead><tr>
+        <th style="width:76px">ID</th><th style="width:56px">From</th>
+        <th style="width:64px">Start</th><th style="width:60px">Length</th>
+        <th>Text</th><th style="width:86px">Result</th>
+      </tr></thead>
+      <tbody id="log"></tbody>
+    </table>
+  </div>
+
+  <div class="bar">
+    <button class="btn" id="build">Build the session files</button>
+    <button class="btn" id="reset">Clear and start again</button>
+    <span class="msg" id="build-msg"></span>
+  </div>
+  <p class="note" id="build-note"></p>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ==========================================================================
+   The bench asks one question and shows the answer stage by stage:
+
+     text -> Chatterbox -> DSP -> Radio A TX -> Radio B RX -> playback
+
+   A stage that cannot run is marked FAILED with the reason. Nothing is
+   quietly substituted, because a bench that hides a missing dependency will
+   cheerfully report that the pipeline works when it does not.
+
+   The one exception is the radio hop, which has an explicit loopback mode
+   for bench work with no hardware. It is labelled as simulated wherever it
+   appears so it cannot be mistaken for a real transmission.
+   ========================================================================== */
+
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return [].slice.call(document.querySelectorAll(s));};
+
+var STAGES=['TEXT','CHATTERBOX','RAW AUDIO','RADIO DSP',
+            'RADIO A TX','RADIO B RX','RECEIVED','PLAYBACK'];
+var status_=null, busy=false;
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function mmss(s){var m=Math.floor(s/60),r=s%60;
+  return String(m).padStart(2,'0')+':'+r.toFixed(1).padStart(4,'0');}
+
+/* ---- readiness ---------------------------------------------------------- */
+
+function drawReady(){
+  var st=status_; if(!st) return;
+  var radios=st.radios||[];
+  var onlineA=(radios[0]||{}).online, onlineB=(radios[1]||{}).online;
+
+  var items=[
+    ['Chatterbox', st.chatterbox ? 'loaded'
+       : st.chatterbox_tried ? 'FAILED' : 'not loaded yet',
+     st.chatterbox ? 'on' : st.chatterbox_tried ? 'off' : ''],
+    ['Radio DSP', st.radio_fx?'ready':'MISSING', st.radio_fx?'on':'off'],
+    ['Voice A', st.refs && st.refs.A ? 'voice_a.wav' : 'MISSING',
+     st.refs && st.refs.A ? 'on':'off'],
+    ['Voice B', st.refs && st.refs.B ? 'voice_b.wav' : 'MISSING',
+     st.refs && st.refs.B ? 'on':'off'],
+    ['SDR 1', onlineA?'connected':((radios[0]||{}).detail||'not found'),
+     onlineA?'on':'off'],
+    ['SDR 2', onlineB?'connected':((radios[1]||{}).detail||'not found'),
+     onlineB?'on':'off']
+  ];
+
+  $('#ready').innerHTML=items.map(function(i){
+    return '<div class="rd '+i[2]+'"><div class="rd-n">'+esc(i[0])+'</div>'+
+           '<div class="rd-s">'+esc(i[1])+'</div></div>';
+  }).join('');
+
+  var note=$('#ready-note'), msgs=[];
+  if(!st.radio_fx) msgs.push('step5_radio_fx.py is not in this folder, so nothing can be radio-processed.');
+  if(st.chatterbox_error) msgs.push('Chatterbox: '+st.chatterbox_error);
+  if(!(st.refs&&st.refs.A)||!(st.refs&&st.refs.B))
+    msgs.push('Reference voices are missing from refs\\. Chatterbox will use its built-in voice, so both radios will sound the same.');
+  if(!onlineA&&!onlineB)
+    msgs.push('No radios found — use loopback for now. Everything except the radio hop is still exercised.');
+
+  if(msgs.length){ note.className='note warn'; note.innerHTML=msgs.map(esc).join('<br>'); }
+  else { note.className='note'; note.innerHTML='<span class="ok-t">Everything is in place.</span>'; }
+}
+
+function refreshStatus(){
+  return fetch('/api/status',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(st){ status_=st; drawReady(); return st; })
+    .catch(function(){ return null; });
+}
+
+/* ---- pipeline display --------------------------------------------------- */
+
+function drawPipe(record, running){
+  var host=$('#pipe');
+  var done={};
+  (record&&record.stages||[]).forEach(function(s){ done[s.stage]=s; });
+
+  var names=STAGES.slice();
+  if(record&&record.sender_key==='B'){
+    names[4]='RADIO B TX'; names[5]='RADIO A RX';
+  }
+
+  host.innerHTML='';
+  var stopped=false;
+
+  names.forEach(function(name){
+    var s=done[name];
+    var cls, mark, detail='', act='';
+
+    if(name==='PLAYBACK'){
+      var okAll = record && record.status==='COMPLETE';
+      cls = okAll?'pass':(record?'fail':'wait');
+      mark = okAll?'\u2713':(record?'\u00d7':'\u00b7');
+      detail = okAll?'audio ready below':'';
+    } else if(s){
+      cls=s.ok?'pass':'fail';
+      mark=s.ok?'\u2713':'\u00d7';
+      detail=s.detail||'';
+      if(!s.ok) stopped=true;
+      if(s.file) act='<button class="btn sm" data-play="'+esc(s.file)+'">Play</button>';
+    } else if(stopped){
+      cls='wait'; mark='\u00b7'; detail='not reached';
+    } else if(running){
+      cls='run'; mark='\u2026'; detail='';
+    } else {
+      cls='wait'; mark='\u00b7';
+    }
+
+    host.innerHTML+='<div class="pstage '+cls+'">'+
+      '<div class="pmark">'+mark+'</div>'+
+      '<div class="pname">'+esc(name)+'</div>'+
+      '<div class="pdetail">'+esc(detail)+'</div>'+
+      '<div class="pact">'+act+'</div></div>';
+  });
+
+  $$('[data-play]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var f=b.getAttribute('data-play').replace(/^session[\/\\]/,'');
+      new Audio('/audio/'+f).play();
+    });
+  });
+}
+
+/* ---- comparison --------------------------------------------------------- */
+
+function drawResult(rec){
+  if(!rec||rec.status!=='COMPLETE'){ $('#result').style.display='none'; return; }
+  $('#result').style.display='block';
+
+  var c=rec.comparison||{};
+  var drift=Math.abs(c.duration_drift||0);
+  var link=c.link_match||0;
+
+  /* The number that judges the radio hop is transmitted vs received.
+     Raw vs transmitted is shown too, but only as information — the DSP is
+     meant to change the audio, so a low figure there is the processing
+     working rather than a fault. */
+  var cards=[
+    [c.tx_duration+'s','transmitted',''],
+    [c.rx_duration+'s','received',''],
+    [(c.duration_drift>=0?'+':'')+(c.duration_drift||0)+'s','drift',
+      drift<0.05?'good':'warn'],
+    [link.toFixed(2),'link match', link>0.9?'good':link>0.5?'':'warn'],
+    [(c.dsp_change!==undefined?c.dsp_change.toFixed(2):'—'),'dsp changed it','']
+  ];
+  $('#cmp').innerHTML=cards.map(function(x){
+    return '<div class="cq '+x[2]+'"><div class="cq-v">'+esc(x[0])+'</div>'+
+           '<div class="cq-k">'+esc(x[1])+'</div></div>';
+  }).join('');
+
+  var strip=function(p){return String(p||'').replace(/^session[\/\\]/,'');};
+  $('#au-raw').src='/audio/'+strip(rec.raw_file);
+  $('#au-tx').src='/audio/'+strip(rec.tx_file);
+  $('#au-rx').src='/audio/'+strip(rec.rx_file);
+
+  var v=$('#verdict');
+  var good = link>0.85 && drift<0.05;
+  v.className='verdict '+(good?'pass':'fail');
+  v.innerHTML='<div class="v-t">'+(good?'Transmission successful':'Something is wrong')+'</div>'+
+    '<div class="v-d">'+
+      rec.id+' &middot; '+esc(rec.sender)+' \u2192 '+esc(rec.receiver)+
+      ' &middot; '+esc(rec.voice)+
+      (rec.simulated_radio?' &middot; <b>radio hop simulated</b>':' &middot; through the radios')+
+      '<br>'+
+      (good
+        ? 'What came off the receiver matches what went into the transmitter. Listen to all three above to confirm by ear.'
+        : (link<=0.85
+            ? 'The received audio does not match what was transmitted. Check levels, the attenuator, and the carrier.'
+            : 'The received audio is a different length from what was sent, which suggests samples were dropped.'))+
+    '</div>';
+}
+
+/* ---- sending ------------------------------------------------------------ */
+
+function send(radio, text){
+  if(busy) return Promise.resolve(null);
+  busy=true;
+
+  var other = radio==='A'?'B':'A';
+  $('#st-'+radio.toLowerCase()).className='radio-st tx';
+  $('#st-'+radio.toLowerCase()).textContent='TRANSMITTING';
+  $('#st-'+other.toLowerCase()).className='radio-st rx';
+  $('#st-'+other.toLowerCase()).textContent='RECEIVING';
+  $('#msg-'+radio.toLowerCase()).textContent='working…';
+  $('#result').style.display='none';
+  drawPipe(null,true);
+
+  return fetch('/api/send',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      text:text, radio:radio,
+      mode:$('#mode').value,
+      carrier_mhz:parseFloat($('#carrier').value)||2400
+    })
+  }).then(function(r){return r.json();})
+    .then(function(j){
+      if(!j.ok) throw new Error(j.error||'refused');
+      return new Promise(function(resolve,reject){
+        var poll=setInterval(function(){
+          fetch('/api/job/'+j.job,{cache:'no-store'})
+            .then(function(r){return r.json();})
+            .then(function(s){
+              if(s.state==='done'){clearInterval(poll);resolve(s.record);}
+              if(s.state==='error'){clearInterval(poll);reject(new Error(s.error));}
+            }).catch(function(){clearInterval(poll);reject(new Error('lost the server'));});
+        },600);
+      });
+    })
+    .then(function(rec){
+      busy=false;
+      $('#st-a').textContent=''; $('#st-b').textContent='';
+      $('#st-a').className='radio-st'; $('#st-b').className='radio-st';
+      $('#msg-'+radio.toLowerCase()).textContent =
+        rec.status==='COMPLETE' ? 'sent' : 'failed at '+(rec.failed_at||'?');
+      drawPipe(rec,false);
+      drawResult(rec);
+      loadLog();
+      refreshStatus();
+      return rec;
+    })
+    .catch(function(e){
+      busy=false;
+      $('#st-a').textContent=''; $('#st-b').textContent='';
+      $('#msg-'+radio.toLowerCase()).innerHTML='<span class="bad">'+esc(e.message)+'</span>';
+      return null;
+    });
+}
+
+/* ---- log ---------------------------------------------------------------- */
+
+function loadLog(){
+  return fetch('/api/messages',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      var tb=$('#log');
+      var msgs=(j&&j.messages)||[];
+      if(!msgs.length){
+        tb.innerHTML='<tr><td colspan="6"><p class="empty">Nothing sent yet.</p></td></tr>';
+        return;
+      }
+      tb.innerHTML=msgs.map(function(m){
+        var okAll=m.status==='COMPLETE';
+        return '<tr class="'+(okAll?'':'fail')+'">'+
+          '<td class="mono">'+esc(m.id)+'</td>'+
+          '<td><span class="tag '+m.sender_key+'">'+m.sender_key+'</span></td>'+
+          '<td class="mono">'+mmss(m.start_time)+'</td>'+
+          '<td class="mono">'+(m.duration?m.duration.toFixed(1)+'s':'—')+'</td>'+
+          '<td>'+esc(m.text)+
+            (m.simulated_radio?' <span class="tag SIM">SIM</span>':'')+'</td>'+
+          '<td>'+(okAll?'<span class="ok-t">complete</span>'
+                       :'<span class="bad">'+esc(m.failed_at||'failed')+'</span>')+'</td>'+
+          '</tr>';
+      }).join('');
+    });
+}
+
+/* ---- test sequences ----------------------------------------------------- */
+
+function runSequence(steps, label){
+  var i=0;
+  $('#seq-msg').textContent=label+' — running…';
+  function next(){
+    if(i>=steps.length){
+      $('#seq-msg').innerHTML='<span class="ok-t">'+esc(label)+' finished.</span>';
+      return;
+    }
+    var s=steps[i++];
+    $('#seq-msg').textContent=label+' — '+i+' of '+steps.length;
+    send(s[0], s[1]).then(function(rec){
+      if(!rec||rec.status!=='COMPLETE'){
+        $('#seq-msg').innerHTML='<span class="bad">Stopped at step '+i+'.</span>';
+        return;
+      }
+      setTimeout(next,700);
+    });
+  }
+  next();
+}
+
+/* ---- wiring ------------------------------------------------------------- */
+
+$('#send-a').addEventListener('click',function(){send('A',$('#text-a').value);});
+$('#send-b').addEventListener('click',function(){send('B',$('#text-b').value);});
+
+$('#t1').addEventListener('click',function(){
+  runSequence([['A','Radio Bravo, this is Radio Alpha. Radio check. Do you read me?']],
+              'Test 1');
+});
+$('#t2').addEventListener('click',function(){
+  runSequence([['B','Radio Alpha, this is Radio Bravo. I read you loud and clear.']],
+              'Test 2');
+});
+$('#t3').addEventListener('click',function(){
+  runSequence([
+    ['A','Bravo, this is Alpha. Radio check.'],
+    ['B','Alpha, this is Bravo. I read you loud and clear.'],
+    ['A','Bravo, understood.'],
+    ['B','Roger.']
+  ],'Test 3');
+});
+
+$('#build').addEventListener('click',function(){
+  var note=$('#build-note');
+  note.textContent='building…';
+  fetch('/api/build',{method:'POST'})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(!j.ok){ note.innerHTML='<span class="bad">'+esc(j.error)+'</span>'; return; }
+      note.innerHTML='<span class="ok-t">Done.</span> '+esc(j.detail)+
+        '<br>Written to <span class="mono">'+esc(j.dir)+'</span><br>'+
+        j.files.map(function(f){
+          return f.match(/\.wav$/)
+            ? '<a href="/audio/'+encodeURIComponent(f)+'" download>'+esc(f)+'</a>'
+            : esc(f);
+        }).join('<br>');
+    })
+    .catch(function(e){ note.innerHTML='<span class="bad">'+esc(e.message)+'</span>'; });
+});
+
+$('#reset').addEventListener('click',function(){
+  if(!confirm('Clear every message from this session?')) return;
+  fetch('/api/reset',{method:'POST'}).then(function(){
+    drawPipe(null,false);
+    $('#result').style.display='none';
+    $('#build-note').textContent='';
+    $('#seq-msg').textContent='';
+    loadLog(); refreshStatus();
+  });
+});
+
+drawPipe(null,false);
+refreshStatus();
+loadLog();
+setInterval(function(){ if(!busy) refreshStatus(); },15000);
+})();
+</script>

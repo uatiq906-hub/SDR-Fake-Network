@@ -1,0 +1,22 @@
+# Core pipeline (DSP, session building, the local web console)
+numpy
+scipy
+soundfile
+requests
+librosa
+
+# Voice cloning / TTS (used by step4_render_voices.py and the console)
+# NOTE: chatterbox-tts pulls in torch + torchaudio as dependencies.
+# Install separately if you hit resolver issues on your platform:
+#   pip install chatterbox-tts
+chatterbox-tts
+torch
+torchaudio
+
+# PlutoSDR hardware link (only needed for pluto_link.py / net_transmit.py)
+pyadi-iio
+
+# --- Not installed via pip, but required ---
+# ffmpeg      -> converts browser-recorded audio (winget install ffmpeg / apt install ffmpeg)
+# Ollama      -> local LLM runtime for step1_generate.py (https://ollama.com), with the
+#                llama3.1:8b model pulled: `ollama pull llama3.1:8b`

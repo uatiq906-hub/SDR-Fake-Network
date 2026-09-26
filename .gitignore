@@ -1,0 +1,34 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Generated / runtime data (recreated by the pipeline, not source) ---
+# These directories are produced by step1_generate.py through step7_session_build.py,
+# server.py and radio_net.py. They are large, machine-specific, and reproducible from
+# the scripts, so they are not tracked. See README > Reproducibility.
+/exchanges.json
+/exchanges_curated.json
+/manifest.json
+/manifest_processed.json
+/session_state.json
+/recorded/
+/refs/
+/clips/
+/output/
+/session/
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- Audio scratch files created ad hoc while testing ---
+*.wav
+!samples/**/*.wav
